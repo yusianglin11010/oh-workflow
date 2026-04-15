@@ -1,0 +1,55 @@
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+!.env.example
+
+# Credentials and keys
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+credentials.json
+service-account*.json
+*-credentials.json
+secrets.yaml
+secrets.yml
+*.secret
+
+# AWS
+.aws/credentials
+.aws/config
+
+# Google Cloud
+gcloud-service-key.json
+application_default_credentials.json
+
+# Docker secrets
+docker-compose.override.yml
+docker-compose.override.yaml
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Dependencies
+node_modules/
+vendor/
+__pycache__/
+*.pyc
+.venv/
+venv/
