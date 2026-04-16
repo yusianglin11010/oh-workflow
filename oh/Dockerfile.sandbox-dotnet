@@ -1,0 +1,17 @@
+# Stage 1: Grab .NET SDK
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS dotnet-sdk
+
+# Stage 2: Your actual image
+FROM ghcr.io/openhands/agent-server:1.12.0-python
+
+USER root
+
+# Copy .NET SDK from stage 1
+COPY --from=dotnet-sdk /usr/share/dotnet /usr/local/dotnet
+
+# Install runtime dependencies only
+RUN apt-get update && apt-get install -y libicu-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV DOTNET_ROOT=/usr/local/dotnet
+ENV PATH=$PATH:/usr/local/dotnet
