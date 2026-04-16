@@ -1,14 +1,4 @@
 services:
-  nginx:
-    image: nginx:alpine
-    container_name: openhands-nginx
-    network_mode: host
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-    depends_on:
-      - openhands
-    restart: unless-stopped
-
   openhands:
     image: ghcr.io/openhands/openhands:1.5.0
     container_name: openhands-app
