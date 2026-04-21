@@ -55,3 +55,9 @@ __pycache__/
 venv/
 
 /images
+
+# CLIProxyAPI
+/CLIProxyApi/auths/
+
+# n8n
+/n8n/_data/
