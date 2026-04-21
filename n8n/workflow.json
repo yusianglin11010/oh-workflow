@@ -1,5 +1,5 @@
 {
-  "name": "My workflow 3",
+  "name": "openhands",
   "nodes": [
     {
       "parameters": {
@@ -9,27 +9,10 @@
       },
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
-      "position": [-400, 96],
+      "position": [-992, -8],
       "id": "173f9f29-1651-488a-a664-e348e7484586",
       "name": "Webhook",
       "webhookId": "86cb560a-918e-4da5-a047-49e3ca6019d6"
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "http://192.168.102.4:3000/api/v1/app-conversations/stream-start",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\n      \"initial_message\": {\n        \"role\": \"user\",\n        \"content\": [{\"text\": {{ $json.content.toJsonString()}}}],\n        \"run\": true\n      },\n      \"git_provider\": \"gitlab\",\n      \"selected_repository\": \"devin_lin/interview\",\n      \"selected_branch\": \"main\"\n    }",
-        "options": {
-          "timeout": 100000
-        }
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.4,
-      "position": [496, 96],
-      "id": "4188c450-cd94-44cb-ae1c-99aa513e556f",
-      "name": "HTTP Request"
     },
     {
       "parameters": {
@@ -37,7 +20,7 @@
       },
       "type": "n8n-nodes-base.limit",
       "typeVersion": 1,
-      "position": [672, 96],
+      "position": [800, -8],
       "id": "a5284b97-914e-4088-bb15-3cf388cd553e",
       "name": "Limit"
     },
@@ -47,19 +30,19 @@
       },
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
-      "position": [1808, 96],
+      "position": [1920, 88],
       "id": "f9a152e0-5578-4fe4-a334-c15a248c1e5b",
       "name": "Wait",
       "webhookId": "bc092c24-b9bf-4e07-a1dc-3ca573a3fdfc"
     },
     {
       "parameters": {
-        "url": "=http://192.168.102.4:3000/api/v1/conversation/{{ $('Set Conversation Id').item.json.conversation_id }}/events/search?limit=100",
+        "url": "=http://localhost:3000/api/v1/conversation/{{ $('Set Conversation Id').item.json.conversation_id }}/events/search?limit=100",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [1840, -112],
+      "position": [2144, -128],
       "id": "70aff609-b510-4b2e-afc2-5d2d5f03945b",
       "name": "Fetch Events"
     },
@@ -67,15 +50,8 @@
       "parameters": {
         "method": "POST",
         "url": "https://chat.gss.tw/api/v4/posts",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Authorization",
-              "value": ""
-            }
-          ]
-        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n    \"file_ids\": [],\n    \"message\": {{$json.message.toJsonString()}},\n    \"channel_id\": \"kik5etzf8tbxdg7ts1fz1ry5fa\",\n    \"root_id\": \"\",\n    \"pending_post_id\": \"okao1ypwzjbiimd5oxccq7hdch:1776159117768\",\n    \"user_id\": \"okao1ypwzjbiimd5oxccq7hdch\",\n    \"create_at\": 0,\n    \"metadata\": {},\n    \"props\": {\n        \"disable_group_highlight\": true\n    },\n    \"update_at\": 1776159117781,\n    \"reply_count\": 0\n}",
@@ -83,9 +59,15 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [2496, -96],
+      "position": [2816, -128],
       "id": "3be7b7e3-7b7a-4fef-b3fc-abd49bf19eb6",
-      "name": "Send Notification"
+      "name": "Send Notification",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "1xqWgvSuYYJgKATz",
+          "name": "mattermost"
+        }
+      }
     },
     {
       "parameters": {
@@ -93,7 +75,7 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2064, -112],
+      "position": [2368, -128],
       "id": "6981d7ee-df7e-434c-9fc1-92e9b5c87435",
       "name": "Extract Summary"
     },
@@ -104,25 +86,31 @@
             {
               "id": "53a2ec66-854c-45db-997a-eea29ae2b902",
               "name": "prev_issues",
-              "value": "={{ $json.body.changes.labels.previous }}",
+              "value": "={{ $('Webhook').item.json.body.changes.labels.previous }}",
               "type": "array"
             },
             {
               "id": "c1930e3f-bbbd-4ac5-9fae-3859b60eeeb0",
               "name": "current_issues",
-              "value": "={{ $json.body.changes.labels.current }}",
+              "value": "={{ $('Webhook').item.json.body.changes.labels.current }}",
               "type": "array"
             },
             {
               "id": "a1f96a11-2301-4a7e-9bde-40e06c553a41",
               "name": "content",
-              "value": "=Review issue {{ $json.body.object_attributes.url }} and then implement it.\nYou should open a branch rebase on latest master or main branch.\nAfter completing your change, open a MR which follow MR template if existed in repository.\nMake sure your implementation could compile and pass unit tests.\nWhen you finish, end your response with a single line in this exact format (nothing after it) \n`SUMMARY: <one sentence summary>, MR: MR Link`",
+              "value": "=Review issue {{ $('Webhook').item.json.body.object_attributes.url }} and then implement it.\nYou should open a branch based on latest main branch.\nAfter completing your change, open a MR which follow MR template if existed in repository. And MR should provides openhands conversations url.\nAfter open a MR, go back to issue and add a label 'reviewing'.\nMake sure your implementation could compile and pass unit tests.\nWhen you finish, end your response with a single line in this exact format (nothing after it) \n`SUMMARY: <one sentence summary>, MR: MR Link`",
               "type": "string"
             },
             {
               "id": "4047abfa-22a1-4757-b09c-6fb3d90f5f92",
               "name": "start_time",
               "value": "={{ $now }}",
+              "type": "string"
+            },
+            {
+              "id": "5cc6db5f-3135-4239-b392-083e5a034d33",
+              "name": "",
+              "value": "",
               "type": "string"
             }
           ]
@@ -131,7 +119,7 @@
       },
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [48, 96],
+      "position": [128, -8],
       "id": "fe1209d9-3812-4a05-b278-a3b1fb9e901b",
       "name": "Set Variables"
     },
@@ -161,7 +149,7 @@
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [-176, 96],
+      "position": [-768, -8],
       "id": "e17d6e5f-35f8-4deb-a90c-caf0733cafb9",
       "name": "Check Issue Webhook"
     },
@@ -202,17 +190,17 @@
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [272, 96],
+      "position": [352, -8],
       "id": "8c8b7d01-d34c-449c-9d21-72eaef9f9c2c",
       "name": "Check If Trigger Tag"
     },
     {
       "parameters": {
-        "jsCode": "const { summary, full } = $(\"Extract Summary\").first().json;\nconst id = $(\"Set Conversation Id\").first().json.conversation_id;\nconst convUrl = `http://192.168.102.4:3000/conversations/${id}`;\nconst elapsed = $(\"Set End Time\").first().json.elapsed_time;     \nconst message = [\n  `🤖 **OpenHands Agent finished**`,\n  ``,\n  summary,\n  ``,\n  `Elapsed Time: ${elapsed} seconds`,\n  ``,\n  `[View conversation →](${convUrl})`,\n  ``,\n  `---`,\n  full\n].join('\\n');\n\nreturn [{ json: { message, conversation_url: convUrl } }];"
+        "jsCode": "const { summary, full } = $(\"Extract Summary\").first().json;\nconst id = $(\"Set Conversation Id\").first().json.conversation_id;\nconst convUrl = `http://localhost:3000/conversations/${id}`;\nconst elapsed = $(\"Set End Time\").first().json.elapsed_time;     \nconst message = [\n  `🤖 **OpenHands Agent finished**`,\n  ``,\n  summary,\n  ``,\n  `Elapsed Time: ${elapsed} seconds`,\n  ``,\n  `[View conversation →](${convUrl})`,\n  ``,\n  `---`,\n  full\n].join('\\n');\n\nreturn [{ json: { message, conversation_url: convUrl } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2272, -112],
+      "position": [2592, -128],
       "id": "cc349604-b215-4e6b-9b46-87ae74b665f1",
       "name": "Format Message"
     },
@@ -242,20 +230,21 @@
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [1376, 16],
+      "position": [1696, -80],
       "id": "4497e7ab-adea-4da9-b8a4-9fd54268b1c7",
       "name": "If Task Finished"
     },
     {
       "parameters": {
-        "url": "=http://192.168.102.4:3000/api/v1/app-conversations?ids={{ $('Set Conversation Id').item.json.conversation_id }}",
+        "url": "=http://localhost:3000/api/v1/app-conversations?ids={{ $('Set Conversation Id').item.json.conversation_id }}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [1152, 96],
+      "position": [1472, -8],
       "id": "d5624db8-43aa-4fe8-b5ed-4d59d76e770f",
-      "name": "Get Status"
+      "name": "Get Status",
+      "retryOnFail": true
     },
     {
       "parameters": {
@@ -273,7 +262,7 @@
       },
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [896, 96],
+      "position": [1024, -8],
       "id": "022a0270-91c6-4ac1-8a87-fd648378b745",
       "name": "Set Conversation Id"
     },
@@ -293,7 +282,7 @@
       },
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [1600, -48],
+      "position": [1920, -128],
       "id": "85b9e5ef-bb89-4b2f-bd00-23271baa3c1f",
       "name": "Set End Time"
     },
@@ -301,25 +290,165 @@
       "parameters": {
         "method": "POST",
         "url": "https://chat.gss.tw/api/v4/posts",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Authorization",
-              "value": ""
-            }
-          ]
-        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n    \"file_ids\": [],\n    \"message\": \"Task Started, [Task](http://192.168.102.4:3000/conversations/{{ $(\"Set Conversation Id\").first().json.conversation_id }})\",\n    \"channel_id\": \"kik5etzf8tbxdg7ts1fz1ry5fa\",\n    \"root_id\": \"\",\n    \"pending_post_id\": \"okao1ypwzjbiimd5oxccq7hdch:1776159117768\",\n    \"user_id\": \"okao1ypwzjbiimd5oxccq7hdch\",\n    \"create_at\": 0,\n    \"metadata\": {},\n    \"props\": {\n        \"disable_group_highlight\": true\n    },\n    \"update_at\": 1776159117781,\n    \"reply_count\": 0\n}",
+        "jsonBody": "={\n    \"file_ids\": [],\n    \"message\": \"Task Started, [Task](http://localhost:3000/conversations/{{ $(\"Set Conversation Id\").first().json.conversation_id }})\",\n    \"channel_id\": \"kik5etzf8tbxdg7ts1fz1ry5fa\",\n    \"root_id\": \"\",\n    \"pending_post_id\": \"okao1ypwzjbiimd5oxccq7hdch:1776159117768\",\n    \"user_id\": \"okao1ypwzjbiimd5oxccq7hdch\",\n    \"create_at\": 0,\n    \"metadata\": {},\n    \"props\": {\n        \"disable_group_highlight\": true\n    },\n    \"update_at\": 1776159117781,\n    \"reply_count\": 0\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [1120, 352],
+      "position": [1248, -8],
       "id": "6e07d4c1-ffaa-468d-8725-2459c1678280",
-      "name": "Send Task Started"
+      "name": "Send Task Started",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "1xqWgvSuYYJgKATz",
+          "name": "mattermost"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f419d3b5-a225-4308-bf22-0dcd0e420786",
+              "name": "repo_name",
+              "value": "={{ $json.repo_name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-96, -8],
+      "id": "debdbeec-8155-4deb-8c86-24f95bbce5e1",
+      "name": "Set Repo Name"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Webhook').item.json.body.labels.filter(item => item.title == \"_Backend\") }}",
+                    "rightValue": "_Backend",
+                    "operator": {
+                      "type": "array",
+                      "operation": "notEmpty",
+                      "singleValue": true
+                    },
+                    "id": "e1117498-c7a5-4d9d-9da9-92ed267a338f"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "backend"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "8b1fff17-f4f9-4474-9aae-f5f402548cce",
+                    "leftValue": true,
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "other"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [-544, -8],
+      "id": "1551767c-74be-4cf8-9f83-5cd2e131e781",
+      "name": "Determine Repo"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:3000/api/v1/app-conversations/stream-start",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n      \"initial_message\": {\n        \"role\": \"user\",\n        \"content\": [{\"text\": {{ $json.content.toJsonString()}}}],\n        \"run\": true\n      },\n      \"git_provider\": \"gitlab\",\n      \"selected_repository\": \"{{ $('Set Repo Name').item.json.repo_name }}\",\n      \"selected_branch\": \"main\"\n    }",
+        "options": {
+          "timeout": 100000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [576, -8],
+      "id": "4188c450-cd94-44cb-ae1c-99aa513e556f",
+      "name": "Start Conversation"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "36c2c48b-c30a-4107-a066-eb1013582968",
+              "name": "repo_name",
+              "value": "BizForm/backend",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-320, -104],
+      "id": "2de134ca-11d1-40cd-a055-4ea279285590",
+      "name": "Set Backend"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "76794cc5-7d39-4937-9030-a5a4247e0ad3",
+              "name": "repo_name",
+              "value": "={{ $json.body.project.path_with_namespace }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-320, 88],
+      "id": "4d812a87-aaff-4494-83a5-b5055a623326",
+      "name": "Set Others"
     }
   ],
   "pinData": {},
@@ -329,17 +458,6 @@
         [
           {
             "node": "Check Issue Webhook",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "HTTP Request": {
-      "main": [
-        [
-          {
-            "node": "Limit",
             "type": "main",
             "index": 0
           }
@@ -405,7 +523,7 @@
       "main": [
         [
           {
-            "node": "Set Variables",
+            "node": "Determine Repo",
             "type": "main",
             "index": 0
           }
@@ -416,7 +534,7 @@
       "main": [
         [
           {
-            "node": "HTTP Request",
+            "node": "Start Conversation",
             "type": "main",
             "index": 0
           }
@@ -467,11 +585,6 @@
       "main": [
         [
           {
-            "node": "Get Status",
-            "type": "main",
-            "index": 0
-          },
-          {
             "node": "Send Task Started",
             "type": "main",
             "index": 0
@@ -489,15 +602,88 @@
           }
         ]
       ]
+    },
+    "Determine Repo": {
+      "main": [
+        [
+          {
+            "node": "Set Backend",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Set Others",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Repo Name": {
+      "main": [
+        [
+          {
+            "node": "Set Variables",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Start Conversation": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Task Started": {
+      "main": [
+        [
+          {
+            "node": "Get Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Backend": {
+      "main": [
+        [
+          {
+            "node": "Set Repo Name",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Others": {
+      "main": [
+        [
+          {
+            "node": "Set Repo Name",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "4baad694-927c-412e-b5bb-d9429f46c2b1",
+  "versionId": "5943602c-e202-4bd1-a1b6-1d1b271fe8ab",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "e6829468b8f56d858129133d295d8fa9bedbd82172869cf86fc48c8e6e82b330"
