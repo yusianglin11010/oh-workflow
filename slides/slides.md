@@ -8,7 +8,7 @@ slideOptions:
   allottedMinutes: 60
 ---
 
-# 用 OpenHands 打造 AI Agent 自動化工作流
+## 用 OpenHands 打造 AI Agent 自動化工作流
 
 **自動化 Code Review、Bug fix，以及更多**
 
@@ -18,74 +18,202 @@ Devin Lin | 2026 年 4 月 21 日
 
 ---
 
-## Resources
+## 自我介紹
 
-https://github.com/yusianglin11010/oh-workflow
+**Devin Lin** | BizForm 產品團隊 — 後端工程師
+
+- 簡報連結 https://github.com/yusianglin11010/oh-workflow
 
 ---
 
 ## 議程
 
-|     | 主題                      | 時間   |
-| --- | ------------------------- | ------ |
-| 1   | 環境配置與核心簡介        | 15 min |
-| 2   | 技術選型與架構            | 10 min |
-| 3   | OpenHands 詳解            | 10 min |
-| 4   | 探索 open source codebase | 10 min |
-| 5   | Use Case、限制與踩坑      | 10 min |
-| 6   | Q&A                       | 5 min+ |
+|     |                           |
+| --- | ------------------------- |
+| 1   | 背景與工具演進            |
+| 2   | 環境配置與核心簡介        |
+| 3   | 技術選型與架構            |
+| 4   | OpenHands 詳解            |
+| 5   | 探索 open source codebase |
+| 6   | Use Case、限制與踩坑      |
+| 7   | Q&A                       |
 
 ---
 
 <!-- .slide: data-background="#1a1a2e" -->
 
-# 第一部分：使用情境與配置
+## 第一部分：背景與工具演進
 
 ---
 
-## 目前的痛點
+## BizForm 團隊
 
-**這些例行事務經常打斷開發者的專注流程：**
+**BizForm 是 SaaS 表單系統**
 
+- 多租戶架構
+- active 線上數百租戶
+
+日常工作：
+
+- 需求開發，可能引用 open source
+- 線上 bug 即時處理
+- 既有 codebase 重構優化
+- Code review
+
+---
+
+## 日常的例行事務
+
+**這些事經常打斷開發者的專注流程：**
+
+- 開發到一半被 bug 插單
+  - 需要組合 log 以及用戶回報的資訊
 - Review MR
-- 前期探索 bug root cause
-- 熟悉不熟的 codebase
+  - 需要切換到另一個開發意圖
+- -> 開發時間碎片化
 
 ---
 
-- 引入平行 AI agents 多工處理...?
-  -> 如何減少 human context switch 開銷
+### Web chat with AI
+
+- 大概很久一年以前......?
+- 用 web chat，手動複製貼上程式碼片段
+- AI 沒辦法知道上下文，需要很長的複製貼上，浪費 context window
 
 ---
 
-## 另一個痛點：平行開發的資源消耗
+### VSCode Extensions：讀得到 codebase 了
 
-**想平行跑 agent，但有代價：**
-
-- 需求：要跑 parallel agent
-  - 多開 VSCode IDE —— 記憶體很快就爆掉
-  - 但其實我們不需要所有工作都開 IDE
-
----
-
-- **terminal 分割視窗 + web chat** 的組合(tmux 等等)
-  - 手動 copy-paste context、切換視窗，效率有限
-  - terminal 膨脹過多，context switch 成本提高
+- 一年前左右
+- 整合成 VSCode Extensions 之後，可以同步翻 code
+- AI 可以善用 CLI read, write, grep 等讀寫搜尋工具，拿到更完整的 context
+- **多開效率太差**
 
 ---
 
-## 如果 web chat 本身就能接 sandbox？
+### CLI Agent：平行但吃資源
 
-**—— 這就是 OpenHands 提供的方案**
+- 開不同分支可以平行使用 agent
+- 操作體驗有限
 
-- Web UI 直接綁一個隔離的 sandbox，不需要本機開 IDE
+---
+
+### 四種方式比較
+
+| 方式              | 優點                                               | 痛點                       |
+| ----------------- | -------------------------------------------------- | -------------------------- |
+| Web chat          | web tab 就可以處理，UI 友善                        | 複製貼上太麻煩，沒有上下文 |
+| VSCode Extensions | 可以讀 codebase，維持開發習慣                      | 多開消耗太多資源           |
+| CLI               | 可以讀 codebase，資源消耗少                        | 操作體驗不友善             |
+| **???**           | 可以讀 codebase＋對話介面＋獨立執行環境＋外包到 VM | —                          |
+
+---
+
+### 我思考的問題
+
+> 如果有工具可以幫我外包 runtime？
+
+---
+
+### 那現在有什麼選擇？
+
+| 工具          | Sandbox | Agent | one-shot workflow | 授權 |
+| ------------- | ------- | ----- | ----------------- | ---- |
+| **OpenHands** | Docker  | 有    | 可                | MIT  |
+| Daytona       | 有      | 無    | 需自己串          | AGPL |
+
+---
+
+### 其他方案的問題
+
+- **Daytona** 只提供 sandbox，agent 邏輯要自己串 LLM + 工具迴圈
+
+---
+
+### Openhands + Daytona...?
+
+https://openhands.daytona.io/
+
+![image](https://hackmd.io/_uploads/ryznEDQ6-x.png)
+
+---
+
+### OpenHands：sandbox + chat + 多開 + 獨立執行環境
+
+- 可以讀 codebase，同時又提供對話介面
+- 又有獨立執行環境，又可以把環境外包在 VM
 - 多個 conversation = 多個 sandbox，平行跑也不吃 local 資源
-  - 可以把 review, bug fix 資源外包到 vm
+  - 可以把 review, bug fix 資源外包到 VM
 - 省下 IDE 的 overhead，又保留互動式操作的體驗
+- Web chat 介面讓 agent first shot 結束之後，開發者可以沿用既有 context
 
 ---
 
-## 舉個例子：BizForm 開發現況
+### 本機開發環境
+
+![local-dev-env](https://hackmd.io/_uploads/rkbjsd7abg.png)
+
+---
+
+### UI 概覽
+
+---
+
+### Overview
+
+![openhands-overview](https://hackmd.io/_uploads/SyTumOmTbg.png)
+
+---
+
+### 聊天介面
+
+- ![openhands-chat-terminal](https://hackmd.io/_uploads/BkJqXuXaWx.png)
+
+---
+
+### Edited code
+
+- ![openhands-code-change](https://hackmd.io/_uploads/HyP97OQpbl.png)
+
+---
+
+## 可設定的部分
+
+### LLM
+
+- ![openhands-llm](https://hackmd.io/_uploads/B17iQd7p-x.png)
+
+---
+
+### Repository
+
+- ![openhands-gitlab](https://hackmd.io/_uploads/H1sjQ_76Zg.png)
+
+---
+
+### git config
+
+- ![openhands-git-user](https://hackmd.io/_uploads/Skfa7_7T-l.png)
+
+---
+
+### OpenHands Demo 時間～
+
+#### 來使用 openhands 閱讀 codebase 看看
+
+- [ref](http://192.168.31.51:3000/conversations/975c16e9bc6945aab267ae940f1b38d2)
+
+---
+
+## 回到 BizForm 開發現況
+
+日常開發流程
+
+![openhands-without-webhook-workflow](https://hackmd.io/_uploads/ryh8quX6Zl.png)
+
+- 部分流程自動化
+
+---
 
 **Mattermost `create-issue` 指令：**
 
@@ -101,121 +229,29 @@ https://github.com/yusianglin11010/oh-workflow
 
 ---
 
-### 現在流程
+### 現在的問題：如果可以自動偵測 Issue？
 
-- User -> Prompt AI check issue(skills or CLI) -> Implement
-
----
-
-## Chatbot vs. Agent
+- 也許我們可以不需要主動 prompt AI
+  > _「如果我們被動讓 AI 偵測 Issue 並直接處理 Issue 呢」_
 
 ---
 
-### Web Chatbot
+### 我們需要讓 Agent 自動觸發
 
-**回答問題、產生文字**
-
-```
-Input → LLM → Output（一次性回應）
-```
-
-_例：「幫我解釋這段 code」_
-
----
-
-- [chat sample](https://claude.ai/chat/41508b62-4e3f-4c8a-9edc-44a2c549f16e)
-
----
-
-### CLI Agent
-
-**採取行動來達成目標**
-
-```
-Input → LLM → Action → Observe → LLM → Action → … → Done
-```
-
-_例：「修好這個 bug 然後送 PR」_
-
----
-
-![local-dev-terminal](https://hackmd.io/_uploads/SybbaMA2-g.png)
-
----
-
-### 關鍵比較
-
-| 面向     | Chatbot        | Agent        |
-| -------- | -------------- | ------------ |
-| 互動方式 | 單次回應       | 多輪迭代     |
-| 執行動作 | 無（只有文字） | 使用工具執行 |
-| 自主性   | 無             | 目標導向     |
-| 適用場景 | 問答、解釋     | 完成任務     |
-
----
-
-### 所以我們需要 Agent
-
-**自動化「處理 issue」不是產生文字，而是要完成一連串動作：**
+Agent 可以自動化讀 issue 並直接發 MR
 
 - 讀 issue → 讀 code → 改 code → 跑 test → 開 MR
-- 每一步都依賴上一步的結果
-- Chatbot 做不到這種「觀察 → 行動 → 再觀察」的迴圈
+- 減少在本機環境切換環境、手動 prompt
 
 ---
 
-## 如果可以...
-
-> _「如果我們被動讓 AI 偵測 Issue 並直接處理 Issue 呢」_
-
----
-
-### OpenHands 提供整合了兩者特性的 solution
-
----
-
-## Sandbox vs. Git Worktree
-
-**兩種隔離方式：**
-
-| 面向       | Sandbox (Docker) | Git Worktree |
-| ---------- | ---------------- | ------------ |
-| 隔離程度   | 完整 OS 層級     | 僅檔案系統   |
-| Submodules | 正常運作         | 可能有問題   |
-| 資源消耗   | 較高             | 較低         |
-| 安全性     | 強               | 有限         |
-
----
-
-### What about runtime：Sandbox
-
-**為什麼不是 Worktree？**
-
-- BizForm 的 repo **大量使用 submodule**
-- Worktree 對 submodule 支援有侷限（容易踩到邊界情況）
-- Sandbox 直接 clone 完整 repo，行為與開發者本機一致
-
-_（資料來源：`[TODO: 補 worktree + submodule 限制的文件連結]`）_
-
----
-
-### 核心觀念
-
-Agent 需要**自主性**和**工具使用能力**
-
-Sandbox 提供**安全的執行環境**
-
----
-
-## 最終配置
-
-![local-dev-env](https://hackmd.io/_uploads/rJAWafR3Wg.png)
+** Issue 品質很重要 **
 
 ---
 
 <!-- .slide: data-background="#16213e" -->
 
-# 第二部分：技術選型與架構
+# 第三部分：自動觸發 Agent
 
 ---
 
@@ -223,7 +259,7 @@ Sandbox 提供**安全的執行環境**
 
 ```
 ┌─────────────────────────────────────────────────┐
-│        通用 AI Agent 工作流                      │
+│        通用 AI Agent 工作流                       │
 │                                                 │
 │  Event         Workflow        AI Agent         │
 │  Source   →  Orchestrator  →  (Sandbox)         │
@@ -250,15 +286,16 @@ Sandbox 提供**安全的執行環境**
 
 ---
 
-### 事件來源：我們選 Webhook + Label 觸發
+### 事件來源：Webhook + Label 觸發
 
 **以 issue 為核心的設計：**
 
 - 讓開發者與 PM 專注在 **issue 規格**
 - 貼上特定 label（如 `agent-trigger`）才觸發
-- 利用 GitLab webhook 的 `changes` 欄位判斷 label 是否剛被加上
 
-**為什麼不用 cron？**
+---
+
+**考慮定期 scan？**
 
 - Issue-driven 比 schedule-driven 更貼近實際需求
 - 避免浪費 LLM 額度掃描無變化的 board
@@ -266,240 +303,92 @@ Sandbox 提供**安全的執行環境**
 
 ---
 
-### 其他候選（未採用）
+### 我選了 n8n!
 
-- **Slack / Mattermost 指令**：可銜接現有 `create-issue`，但需要 issue one shot 就到位，容易出錯
-- **Cron 排程**：未來若要做 issue board 定期掃描可再加
+原因是...
 
----
-
-### 工作流調度器
-
-| 工具           | 優點                 | 缺點                  |
-| -------------- | -------------------- | --------------------- |
-| **n8n**        | 視覺化、可自建、免費 | 有學習曲線            |
-| Temporal       | 企業級、強一致性     | 設定複雜、需寫程式    |
-| GitHub Actions | 原生整合 GitHub      | 我們用 GitLab，不適用 |
-| 自寫腳本       | 完全掌控             | 維護與擴充成本高      |
-
----
-
-### 為什麼排除其他？
-
-- **Temporal**：為高可靠性分散式系統設計，對 webhook → API 觸發這種輕量流程過重
-- **GitHub Actions**：公司走 GitLab
-- **自寫腳本**：之後要串 Mattermost / Slack 通知、加條件判斷，每個都要自己寫
-
----
-
-### 最重要的一點！！
-
-- BizForm 本來就有跑好的 n8n 可以用
+- BizForm 本來就有內網跑好的 n8n 可以用 XD
 - 已經整合在多個需求
-  - standup 通知
+  - stand-up 通知
   - gitlab pipelines status notifications 等等
 
 ---
 
-### AI Agent 框架
+### 更多優點
 
-| 工具          | Sandbox | Agent Harness                 | 可 one-shot 完整 workflow | 授權   |
-| ------------- | ------- | ----------------------------- | ------------------------- | ------ |
-| **OpenHands** | Docker  | 有                            | 可                        | MIT    |
-| Daytona       | 有      | 無                            | 需自己串                  | AGPL   |
-| SWE-agent     | 有限    | 有（偏 SWE bench）            | 偏研究用途                | MIT    |
-| Aider         | 無      | 有（偏 CLI pair programming） | 需人在旁邊                | Apache |
-
----
-
-### 為什麼選 OpenHands？關鍵是 Sandbox + Agent 一起
-
-**我們要的 workflow：**
-
-```
-讀 issue → 讀 code → 改 code → compile → 跑 test → 開 MR
-```
-
-- **Daytona** 只提供 sandbox，agent 邏輯要自己串 LLM + 工具迴圈
-- **SWE-agent** 專注在 SWE-bench 類 benchmark 場景，不適合日常 workflow
-- **Aider** 是 CLI pair programming 工具，需要開發者在旁邊互動
-- **OpenHands** 把 sandbox + agent harness 綁在一起，一次 API 呼叫就能跑完整條 pipeline
-
----
-
-## 我們選的組合：n8n + OpenHands
-
----
-
-### 為什麼選 n8n？
-
-**為什麼是它：**
-
-1. **公司既有內網 n8n server** — 直接可串內網 GitLab，無額外部署成本
-2. **豐富的節點生態** — 通知可彈性串接 Mattermost / Slack / Discord / Telegram
-3. 視覺化編輯器讓非工程角色也能看懂 / 調整 workflow
-
----
-
-### 為什麼選 OpenHands？
-
-**決定性理由：Sandbox + Agent Harness 綁在一起**
-
-- 一次 API 呼叫即可完成 `review → compile → test → MR` 整條 workflow
-- 不用自己寫 agent 迴圈、工具定義、prompt 調度
-- REST API 設計為自動化整合而生（streaming 狀態更新）
-- MIT 授權、社群活躍、映像檔可自訂
-
----
-
-### OpenHands
-
-- Web chat 介面讓 agent first shot 結束之後，開發者可以沿用既有 context
+- **豐富的節點生態** — 通知可彈性串接 Mattermost / Slack / Discord / Telegram
+- 視覺化編輯器托拉操作很方便
 
 ---
 
 ### 架構總覽
 
-- ![openhands-workflow](https://hackmd.io/_uploads/S1820MC3Zl.png)
+![openhands-with-webhook](https://hackmd.io/_uploads/S1IoJjmp-g.png)
 
 ---
 
-<!-- .slide: data-background="#1a1a2e" -->
-
-# 第三部分：OpenHands 詳解
+### 接著來看看 n8n 怎麼做
 
 ---
 
-## 核心概念
+## 最終結果總覽
+
+- [example](http://192.168.102.4:3000/conversations/1d31f91f075a4a9e8ca5e25ceddf8a2d)
+- [n8n](http://192.168.102.4/workflow/EOWPBcfwCj7XEk0W/executions/74956)
+
+**接下來將實作以下：**
+
+1. **Step A**：在 n8n 接收 webhook
+2. **Step B**：透過 REST API 觸發 OpenHands
+3. **Step C**：n8n 串接通知
 
 ---
 
-### 元件
+## Demo 前置準備
 
-- **OpenHands App**：LLM 調度、計畫、工具分配
-- **Agent Server**：在 sandbox 內執行的 runtime
-- **Sandbox**：隔離的 Docker container
-- **REST API**：程式化存取介面，適合自動化整合
+**需要準備的東西：**
 
----
-
-### 使用模式
-
-| 模式         | 用途                                |
-| ------------ | ----------------------------------- |
-| **GUI**      | 互動式操作（後續 follow up 進度）   |
-| **CLI**      | 本機使用、手動觸發                  |
-| **REST API** | 自動化整合（我們觸發 agent 的方式） |
+- Docker
+- 我們將用 docker 跑 n8n + openhands
 
 ---
 
-## OpenHands 內部運作原理（可能略過）
+### 1. Build custom sandbox image(optional)
 
-**為什麼要看這個迴圈？**
-
-- Debug 失敗任務時，知道卡在哪一步
-- 估計 token 消耗與執行時間
-- 理解為什麼 agent 有時會「繞路」
-
----
-
-### Agent Loop
-
-```python
-while not done:
-    # 1. 取得目前狀態
-    state = get_observation()
-
-    # 2. 向 LLM 詢問下一步動作
-    action = agent.step(state)
-
-    # 3. 在 sandbox 裡執行動作
-    result = runtime.execute(action)
-
-    # 4. 檢查是否完成
-    done = is_finished(result)
+```bash
+docker build -f oh/Dockerfile.sandbox-dotnet -t openhands-dotnet:latest oh/
 ```
 
 ---
 
-### 原始碼參考
+### 2. 準備環境變數
 
-- `openhands/agenthub/codeact_agent/` — agent 實作
-- `openhands/runtime/` — sandbox 執行
-- Prompt template 和 tool 定義
+```bash
+cp .env.example .env
+```
 
-_（有興趣的話可以一起深入看）_
-
----
-
-## UI 概覽
-
-_（展示 OpenHands 的 web 介面）_
-
-- 聊天介面
-- 檔案瀏覽器
-- Terminal 檢視
-- Agent 狀態 / 日誌
+編輯 `.env` 填入所需設定。
 
 ---
 
-### 聊天介面
+### 3. 啟動服務
 
-- [ ] 放截圖 + live demo
+```bash
+docker-compose up -d
+```
 
----
-
-### Terminal 檢視
-
-- [ ] 放截圖 + live demo
-
----
-
-### 檔案瀏覽器
-
-- [ ] 放截圖 + live demo
+- OpenHands Web UI：<http://localhost:3000>
+- n8n Web UI：<http://localhost:5678>
 
 ---
 
-## 可設定的部分
-
----
-
-### 主要環境變數
+### sandbox image 調整
 
 ```yaml
-# Sandbox 設定
-SANDBOX_BASE_CONTAINER_IMAGE: openhands-custom:latest
-SANDBOX_STARTUP_GRACE_SECONDS: 120
-
-# LLM 設定
-LLM_MODEL: anthropic/claude-3-5-sonnet
-LLM_API_KEY: sk-xxx
+# Sandbox env 設定
+AGENT_SERVER_IMAGE_REPOSITORY=your-custom-image
+AGENT_SERVER_IMAGE_TAG=latest
 ```
-
----
-
-### 可自訂的項目
-
-- Base container image（執行環境）
-- LLM provider 和 model
-- Agent 類型和行為
-- Timeout 和資源限制
-
----
-
-## 公司運算資源申請
-
-- https://mis.gss.com.tw/ -> 申請GPU運算模型
-
----
-
-## 公司 AI model 串接
-
-- [ ] openhands-llm-setup
-- https://mlpub.gss.com.tw/v1
-
-## 自訂映像檔
 
 ---
 
@@ -514,14 +403,19 @@ LLM_API_KEY: sk-xxx
 ### 範例：.NET Dockerfile
 
 ```dockerfile
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS dotnet-sdk
+
+# Stage 2: Your actual image
 FROM ghcr.io/openhands/agent-server:1.12.0-python
 
 USER root
 
-# 安裝 .NET 8.0
-RUN apt-get update && apt-get install -y curl libicu-dev \
-    && curl -fsSL https://dot.net/v1/dotnet-install.sh \
-       | bash -s -- --channel 8.0 --install-dir /usr/local/dotnet
+# Copy .NET SDK from stage 1
+COPY --from=dotnet-sdk /usr/share/dotnet /usr/local/dotnet
+
+# Install runtime dependencies only
+RUN apt-get update && apt-get install -y libicu-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 ENV DOTNET_ROOT=/usr/local/dotnet
 ENV PATH=$PATH:/usr/local/dotnet
@@ -529,393 +423,9 @@ ENV PATH=$PATH:/usr/local/dotnet
 
 ---
 
-### 關於網路
-
-- 需要存取外部網路的 LLM API
-- 存取公司 mlpub 需要 VPN
-- 設定方式：讓 container 使用 host network
-
----
-
-### 範例設定檔
-
-- 詳見 repo：https://github.com/yusianglin11010/oh-workflow
-  - `docker-compose.yaml`
-  - `.env.example`
-  - `oh/Dockerfile.sandbox-dotnet`
-  - `n8n/workflow.json`
-
----
-
-### 設定檔
-
-- [ ] 待補
-
----
-
-<!-- .slide: data-background="#16213e" -->
-
-# 第四部分：探索 open source codebase
-
-**以 OpenHands 為範例，動手建一個自動化 workflow**
-
----
-
-### 為什麼用 OpenHands 當範例？
-
-- 它本身就是個典型的 open source codebase（Python、FastAPI、React、Docker 多 runtime）
-- 文件分散、issue 多、PR 量大——正是 agent 能幫上忙的場景
-- 同時也是我們這次要整合的工具，順便熟悉它的內部
-
----
-
-## Demo 總覽
-
-**我們將一步步建構完整的自動化流程：**
-
-1. **Step A**：在 n8n 接收 webhook
-2. **Step B**：透過 REST API 觸發 OpenHands
-3. **Step C**：n8n 串接 HTTP Request
-4. **Step D**：完整的工作流整合
-5. **Step E**：端對端 demo
-
----
-
-## Demo 前置準備
-
-**需要準備的東西：**
-
-- OpenHands 啟動且可存取
-- 已建置好的 kitchen sink image（.NET）
-- n8n 運行中
-- 測試用的 GitLab 專案
-
----
-
-<!-- .slide: data-background="#0d1117" -->
-
-## Step A：在 n8n 接收 Webhook
-
----
-
-### A.1 建立 Webhook 節點
-
-**設定 n8n 接收 GitLab 事件**
-
-- 建立新的 workflow
-- 新增「Webhook」節點
-- 設定 HTTP method (POST)
-- 複製 webhook URL
-
-- [ ] 放 n8n webhook 節點截圖
-
----
-
-### A.2 設定 GitLab Webhook
-
-**把 GitLab 接到 n8n**
-
-- 到 GitLab project → Settings → Webhooks
-- 貼上 n8n 的 webhook URL
-- 選擇觸發事件（Issue events、Label events）
-- 測試 webhook
-
-- [ ] 放 GitLab webhook 設定截圖
-
----
-
-### A.3 測試 Webhook 接收
-
-**確認 n8n 有收到資料**
-
-- 在 GitLab 觸發事件（替 issue 加標籤）
-- 檢查 n8n 執行日誌
-- 查看收到的 payload
-
-- [ ] 放 n8n 執行日誌截圖
-
----
-
-<!-- .slide: data-background="#0d1117" -->
-
-## Step B：透過 REST API 觸發 OpenHands
-
----
-
-### B.1 OpenHands REST API 基礎
-
-**用 HTTP 呼叫來啟動 agent**
-
-```bash
-# 基本 REST API 呼叫
-curl -X POST http://localhost:3000/api/v1/app-conversations/stream-start \
-  -H "Content-Type: application/json" \
-  -d '{
-    "initial_message": {
-      "role": "user",
-      "content": [{"text": "Review this code for bugs"}],
-      "run": true
-    }
-  }'
-```
-
----
-
-### B.2 帶入 Repository 上下文
-
-**指定 Git provider 和 repo**
-
-```bash
-curl -X POST http://localhost:3000/api/v1/app-conversations/stream-start \
-  -H "Content-Type: application/json" \
-  -d '{
-    "initial_message": {
-      "role": "user",
-      "content": [{"text": "Review the code and fix any bugs"}],
-      "run": true
-    },
-    "git_provider": "gitlab",
-    "selected_repository": "mygroup/myproject",
-    "selected_branch": "main"
-  }'
-```
-
----
-
-### B.3 API 回應格式
-
-**Streaming JSON 狀態更新**
-
-```json
-{"id":"...","status":"WORKING","sandbox_id":null,...}
-{"id":"...","status":"WAITING_FOR_SANDBOX",...}
-{"id":"...","status":"PREPARING_REPOSITORY",...}
-{"id":"...","status":"STARTING_CONVERSATION",...}
-{"id":"...","status":"READY","app_conversation_id":"...",...}
-```
-
----
-
-### CLI vs REST API 比較
-
-| 特性            | CLI (`openhands -t`) | REST API               |
-| --------------- | -------------------- | ---------------------- |
-| Sandbox 隔離    | 無（在 host 上執行） | 有（Docker container） |
-| Repository 複製 | 手動                 | 自動                   |
-| n8n 整合方式    | Shell command        | HTTP Request           |
-| 隔離性          | 無                   | Docker container       |
-
-**結論：自動化可以用 REST API**
-
----
-
-<!-- .slide: data-background="#0d1117" -->
-
-## Step C：n8n 串接 HTTP Request
-
----
-
-### C.1 新增 HTTP Request 節點
-
-**在 n8n 裡呼叫 OpenHands API**
-
-- 新增「HTTP Request」node
-- 設定 Method: POST
-- URL: `http://localhost:3000/api/v1/app-conversations/stream-start`
-- 設定 JSON body
-
-- [ ] 放 n8n HTTP Request 節點截圖
-
----
-
-### C.2 動態組合 Request Body
-
-**把 webhook 資料帶入 API 呼叫**
-
-```json
-{
-  "initial_message": {
-    "role": "user",
-    "content": [
-      {
-        "text": "Review issue #{{ $json.object_attributes.iid }}: {{ $json.object_attributes.title }}"
-      }
-    ],
-    "run": true
-  },
-  "git_provider": "gitlab",
-  "selected_repository": "{{ $json.project.path_with_namespace }}",
-  "selected_branch": "{{ $json.object_attributes.source_branch || 'main' }}"
-}
-```
-
-- [ ] 放 n8n expression 範例截圖
-
----
-
-### C.3 處理回應
-
-**解析 API 回應結果**
-
-- 擷取 `app_conversation_id`
-- 處理 streaming JSON
-- 錯誤處理
-
-- [ ] 放 output 處理截圖
-
----
-
-<!-- .slide: data-background="#0d1117" -->
-
-## Step D：完整的工作流整合
-
----
-
-### D.1 事件過濾：兩層 IF
-
-**只在「issue 剛被貼上 `agent-trigger`」時觸發**
-
-- **Check Issue Webhook**：`body.event_type == "issue"`
-- **Check If Trigger Tag**：
-  - `prev_labels` 不含 `agent-trigger`
-  - `current_labels` 新增了 `agent-trigger`
-- 比對 label 差異，避免同一個 issue 重複觸發
-
-- [ ] 放兩個 IF 節點設定截圖
-
----
-
-### D.2 組 Prompt 與啟動 Agent
-
-**Set Variables + HTTP Request（OpenHands）**
-
-- 組出給 agent 的指令，包含：
-  - 讀取 issue URL、開 branch、實作、開 MR
-  - 要求最後一行輸出 `SUMMARY: <摘要>, MR: <連結>`
-- 記錄 `start_time` 用來計算耗時
-- POST `/api/v1/app-conversations/stream-start`
-- 用 **Limit** 節點只保留 streaming 最後一筆
-- **Set Conversation Id**：擷取 `app_conversation_id`
-
-- [ ] 放 Set Variables + HTTP Request 節點截圖
-
----
-
-### D.3 先送一則「Task Started」通知
-
-**讓使用者立刻知道 agent 已啟動**
-
-- 分支到 **Send Task Started**（HTTP Request → Mattermost）
-- 訊息附上 conversation URL，方便點進去看 agent 即時動作
-- 主線同時進入輪詢狀態
-
-- [ ] 放 Task Started 通知截圖
-
----
-
-### D.4 Polling 直到 Agent 完成
-
-**Get Status → If Task Finished → Wait 循環**
-
-- **Get Status**：GET `/api/v1/app-conversations?ids={{conversation_id}}`
-- **If Task Finished**：`execution_status == "finished"`
-  - false → **Wait 10 秒** → 回到 Get Status
-  - true → 進入結果處理階段
-- **Set End Time**：計算 `elapsed_time`（秒）
-
-- [ ] 放 polling 子流程截圖
-
----
-
-### D.5 擷取 Summary 並通知 Mattermost
-
-**Fetch Events → Extract Summary → Format Message → Send Notification**
-
-- **Fetch Events**：GET `/api/v1/conversation/{id}/events/search?limit=100`
-- **Extract Summary**（Code 節點）：
-  - 過濾 `source == 'agent'` 且 `role == 'assistant'` 的最後一則訊息
-  - 用 regex 抓 `SUMMARY:` 那一行
-- **Format Message**：組出 Markdown（摘要 + 耗時 + conversation 連結 + 完整內容）
-- **Send Notification**：POST 到 Mattermost `chat.gss.tw/api/v4/posts`
-
-- [ ] 放結果通知節點截圖
-
----
-
-### D.6 完整工作流圖
-
-```
-Webhook ─► Check Issue ─► Set Vars ─► Check Tag ─► OpenHands API
-                                                        │
-                                              Limit ◄───┘
-                                                │
-                                      Set Conversation Id
-                                       ├─► Send Task Started (Mattermost)
-                                       └─► Get Status ◄──────┐
-                                               │             │
-                                        If Task Finished ────┤
-                                          │ (false)          │
-                                          ▼                  │
-                                         Wait 10s ───────────┘
-                                          │ (true)
-                                          ▼
-                              Set End Time ─► Fetch Events
-                                               │
-                                       Extract Summary
-                                               │
-                                       Format Message ─► Send Notification (Mattermost)
-```
-
-- [ ] 放最終 workflow 總覽截圖
-
----
-
-<!-- .slide: data-background="#0d1117" -->
-
-## Step E：Workflow Demo
-
----
-
-### E.1 Workflow 總覽
-
-**直接在 n8n 打開 workflow 走一遍**
-
-- 逐個介紹節點：Webhook、IF、Set、HTTP Request、Code、Wait
-- 說明資料如何在節點之間流動
-- 點開幾個關鍵節點看設定
-
-- [ ] 放 n8n workflow 畫布截圖
-
----
-
-### E.2 觸發並觀察執行
-
-**Issue 加上 `agent-trigger` label，看 workflow 跑起來**
-
-- 節點依序被點亮
-- Polling loop 反覆執行 Get Status / Wait
-- 最後送出 Mattermost 通知
-
-- [ ] 放 n8n 執行中截圖
-
----
-
-## 原始碼 Walkthrough
-
-**帶走這些設定檔，自己跑看看：**
-
-https://github.com/yusianglin11010/oh-workflow
-
-- `docker-compose.yaml`
-- `.env.example`
-- `oh/Dockerfile.sandbox-dotnet`
-- `n8n/workflow.json`
-
----
-
 <!-- .slide: data-background="#1a1a2e" -->
 
-# 第五部分：Use Case、限制與踩坑
+# 第六部分：Use Case、限制與踩坑
 
 ---
 
@@ -961,11 +471,11 @@ https://github.com/yusianglin11010/oh-workflow
 
 ---
 
-## 限制與踩坑
+## Openhands 限制
 
 ---
 
-## 只能用一個自訂映像檔
+## 只能設定一個 runtime image
 
 ---
 
@@ -973,7 +483,8 @@ https://github.com/yusianglin11010/oh-workflow
 
 ```yaml
 # 全域只能設定一個映像檔
-SANDBOX_BASE_CONTAINER_IMAGE=openhands-dotnet:latest
+AGENT_SERVER_IMAGE_REPOSITORY=openhands-dotnet
+AGENT_SERVER_IMAGE_TAG=latest
 ```
 
 **無法依專案動態切換 runtime！**
@@ -996,7 +507,7 @@ SANDBOX_BASE_CONTAINER_IMAGE=openhands-dotnet:latest
 
 ---
 
-### 方案二：Kitchen Sink Image
+### 方案二：all-in-one Image
 
 ```dockerfile
 FROM openhands/agent-server:latest
@@ -1020,36 +531,7 @@ RUN install dotnet nodejs python go rust ...
 
 ---
 
-## Dockerfile
-
-```
-# Stage 1: Grab .NET SDK
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS dotnet-sdk
-
-# Stage 2: Your actual image
-FROM ghcr.io/openhands/agent-server:1.12.0-python
-
-USER root
-
-# Copy .NET SDK from stage 1
-COPY --from=dotnet-sdk /usr/share/dotnet /usr/local/dotnet
-
-# Install runtime dependencies only
-RUN apt-get update && apt-get install -y libicu-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-ENV DOTNET_ROOT=/usr/local/dotnet
-ENV PATH=$PATH:/usr/local/dotnet
-```
-
----
-
-- 一定要有 `FROM ghcr.io/openhands/agent-server:1.12.0-python`
-- openhands server 需要跟 agent container 溝通
-
----
-
-## RBAC 的限制
+## Open source 版本的限制
 
 ---
 
@@ -1060,7 +542,7 @@ ENV PATH=$PATH:/usr/local/dotnet
 
 ---
 
-### 影響
+### 缺點
 
 - 只要有存取權就能用任何 LLM key
 - 無法限制到特定專案
@@ -1071,7 +553,7 @@ ENV PATH=$PATH:/usr/local/dotnet
 ### 暫時解法
 
 - 網路層級的存取控制
-- 分開部署不同團隊的 instance
+- 分開部署不同團隊成員的 instance
   - 自己墊一層 nginx 做 multi openhands instances proxy
 - 企業版（付費）
 
@@ -1124,7 +606,7 @@ https://github.com/router-for-me/CLIProxyAPI
 **1. 用 Docker Compose 啟動 CLIProxyAPI：**
 
 ```bash
-cd CLIProxyAPI && docker compose up -d
+cd CLIProxyAPI && docker-compose up -d
 ```
 
 **2. 登入一次（以 Claude 為例）：**
@@ -1156,7 +638,7 @@ _詳細設定請參考共享的 setup repo_
 
 <!-- .slide: data-background="#16213e" -->
 
-# 第六部分：Q&A
+# 第七部分：Q&A
 
 ---
 
