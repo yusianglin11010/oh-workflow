@@ -5,10 +5,8 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
-      - SANDBOX_BASE_CONTAINER_IMAGE=${SANDBOX_BASE_CONTAINER_IMAGE}
-      # SANDBOX_USE_HOST_NETWORK removed: host network causes all sandbox containers
-      # to fight for port 8000, new containers crash (exit 1), and openhands-app
-      # sends wrong session_api_key to the old container → 401 Unauthorized.
+      - AGENT_SERVER_IMAGE_REPOSITORY=${AGENT_SERVER_IMAGE_REPOSITORY:-ghcr.io/openhands/agent-server}
+      - AGENT_SERVER_IMAGE_TAG=${AGENT_SERVER_IMAGE_TAG:-1.15.0-python}
     ports:
       - "3000:3000"
     volumes:
@@ -28,15 +26,12 @@ services:
       - ./n8n/_data:/home/node/n8n_data
     environment:
       - N8N_USER_MANAGEMENT_DISABLED=false
-      - N8N_BASIC_AUTH_ACTIVE=true # 如果您想要启用基本认证
-      # 下面是邮件服务的相关配置，请根据您的邮件服务情况进行配置
-
+      - N8N_BASIC_AUTH_ACTIVE=true 
       - N8N_SECURE_COOKIE=false
       - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
       - NODE_OPTIONS=--max-old-space-size=8096
       - N8N_METRICS=true
       - WEBHOOK_URL=${WEBHOOK_URL}
-      #- WEBHOOK_URL=http://192.168.102.4
       - EXECUTIONS_TIMEOUT=-1
       - EXECUTIONS_TIMEOUT_MAX=36000
       - NODE_FUNCTION_ALLOW_EXTERNAL=*
